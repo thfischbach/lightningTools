@@ -3,14 +3,14 @@ import sys, argparse
 from lnWrapper.lnWrapper import LnWrapper
 
 parser = argparse.ArgumentParser(description="Lightning channel status")
-parser.add_argument( "-r", "--rpcPath", dest="rpcPath", action="store", default="/home/lightning/.lightning/lightning-rpc", type=str, help="path to lightning RPC")
+parser.add_argument( "-r", "--rpcFile", dest="rpcFile", action="store", default="/home/lightning/.lightning/lightning-rpc", type=str, help="lightning RPC file")
 parser.add_argument( "-m", "--more", dest="more", action="store_true", default=False, help="more information about peers")
 
 args = parser.parse_args()
-rpcPath = args.rpcPath
+rpcFile = args.rpcFile
 more = args.more
 
-ln = LnWrapper(rpcPath)
+ln = LnWrapper(rpcFile)
 
 peers = ln.getPeers()
 forwards = ln.getForwards()
