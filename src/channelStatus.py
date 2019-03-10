@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import sys, argparse
-from lightning import LightningRpc
-from common.helper import *
+from lnWrapper.lnWrapper import LnWrapper
 
 parser = argparse.ArgumentParser(description="Lightning channel status")
 parser.add_argument( "-r", "--rpcPath", dest="rpcPath", action="store", default="/home/lightning/.lightning/lightning-rpc", type=str, help="path to lightning RPC")
@@ -11,14 +10,14 @@ args = parser.parse_args()
 rpcPath = args.rpcPath
 more = args.more
 
-l = LightningRpc(rpcPath)
-funds = l.listfunds()
-peers = l.listpeers()
-forwards = l.listforwards()["forwards"]
+ln = LnWrapper(rpcPath)
+
+peers = ln.getPeers()
+forwards = ln.getForwards()
 totalOutputValue = 0    
 totalChChars = 20
 
-for o in funds["outputs"]:
+for o in ln.getFundOutputs():
     totalOutputValue += o["value"]
 print("all amounts in mSat")
 print("Outputs total value: %d" % (totalOutputValue*1000))
@@ -59,9 +58,9 @@ for p in peers["peers"]:
                 if channelId == fwd["out_channel"]:
                     fwdCountOut += 1
                     fwdTotalOut += fwd["out_msatoshi"]
-        total = msat(c, "total")
-        ourEnd = msat(c, "to_us")
-        theirEnd = total - ourEnd
+        total = ln.getChannelTotalAmount(c)
+        ourEnd = ln.getChannelOurAmount(c)
+        theirEnd = ln.getChannelTheirAmount(c)
         ourEndRel = float(ourEnd)/float(total)
         theirEndRel = float(theirEnd)/float(total)
         channelName = c["short_channel_id"].ljust(12)
