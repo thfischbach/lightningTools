@@ -28,7 +28,7 @@ header += "theirEnd     FwdIn(Cnt)    FwdOut(Cnt)"
 if not more:
     print(header)
 
-for p in peers["peers"]:
+for p in peers:
     if more:
         print()
         print("ID: %s" % p["id"])
