@@ -45,20 +45,6 @@ def getMidRoute(inboundNodeId, outboundNodeId, amount, myId):
     print("no route found after %d tries" % tries)
     return None
 
-def adaptFees(route, amount):
-    delay = 9
-    for r in reversed(route):
-        r['msatoshi'] = msatoshi
-        r['delay'] = delay
-        channels = l.listchannels(r['channel'])
-        for ch in channels.get("channels"):
-            if ch['destination'] == r['id']:
-                fee = ch['base_fee_millisatoshi']
-                fee += msatoshi * ch['fee_per_millionth'] / 1000000
-                msatoshi += int(round(fee))
-                delay += ch['delay']
-    
-
 args = parser.parse_args()
 rpcFile = args.rpcFile
 outboundChannelId = args.outbound
