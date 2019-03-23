@@ -1,5 +1,6 @@
 from lightning import LightningRpc
 from lnWrapper.exceptions import LnWrapperException
+from time import time
 
 class LnWrapper:
     
@@ -9,7 +10,10 @@ class LnWrapper:
         self.__funds = None
         self.__peers = None
         self.__peersFiltered = None
+        self.__channels = None
+        self.__channelsFiltered = None
         self.__forwards = None
+        self.__info = None
     
     def getFunds(self, reload=False):
         if not self.__funds or reload:
@@ -32,11 +36,54 @@ class LnWrapper:
             self.__forwards = self.rpc.listforwards()["forwards"]
         return self.__forwards
     
-    def msat(self, structure, fieldName):
+    def getChannels(self, channelId=None, reload=False):
+        if channelId:
+            if self.__channelsFiltered and self.__channelsFiltered[0]["short_channel_id"] == channelId and self.__channelsFiltered[1]["short_channel_id"] == channelId:
+                return self.__channelsFiltered
+            else:
+                self.__channelsFiltered = self.rpc.listchannels(channelId)["channels"]
+                return self.__channelsFiltered
+        elif not self.__channels or reload:
+            self.__channels = self.rpc.listchannels()["channels"]
+        return self.__channels
+    
+    def getInfo(self, reload=False):
+        if not self.__info or reload:
+            self.__info = self.rpc.getinfo()
+        return self.__info
+    
+    def getMyId(self):
+        return self.getInfo()["id"]
+    
+    def getRoute(self, toPeer, amount, fromPeer=None):
+        route = self.rpc.getroute(toPeer, amount, riskfactor=1, cltv=9, fromid=fromPeer)
+        return route["route"]
+    
+    def invoice(self, amount, label=None, description=None):
+        if not label:
+            label = str(time())
+        if not description:
+            description = label
+        return self.rpc.invoice(amount, label, description)
+    
+    def sendPay(self, route, payment_hash):
+        return self.rpc.sendpay(route, payment_hash)
+    
+    def waitSendPay(self, payment_hash):
+        return self.rpc.waitsendpay(payment_hash)
+    
+    def get_msat(self, structure, fieldName):
         fullFieldName = fieldName + "_msat"
         valStr = structure[fullFieldName]
-        msatInt = int(valStr)
+        if type(valStr) == str:
+            msatInt = int(valStr[:-4])
+        else:
+            msatInt = int(valStr)
         return msatInt
+    
+    def set_msat(self, structure, fieldName, value):
+        fullFieldName = fieldName + "_msat"
+        structure[fullFieldName] = str(value) + "msat"
 
     def __has_msatField(self, structure, fieldName):
         return fieldName + "_msat" in structure
@@ -54,9 +101,6 @@ class LnWrapper:
             if c["short_channel_id"] == channelId:
                 return c
         return None
-
-    def getPeerById(self, id):
-        return self.getPeers(id)
     
     def getPeerChannelsByPeerId(self, peerId):
         peer = self.getPeerById(peerId)
@@ -70,19 +114,26 @@ class LnWrapper:
                     return c
         return None
     
+    def getChannelByChannelId(self, channelId):
+        return self.getChannels(channelId)
+    
+    def getPeerIdByChannelId(self, channelId):
+        c = self.getFundChannelById(channelId)
+        return c["peer_id"]
+    
     def getChannelTotalAmount(self, channel):
         if self.__has_msatField(channel, "amount"):
-            return self.msat(channel, "amount")
+            return self.get_msat(channel, "amount")
         elif self.__has_msatField(channel, "total"):
-            return self.msat(channel, "total")
+            return self.get_msat(channel, "total")
         else:
             raise LnWrapper_msatFoundException("amount or total")
     
     def getChannelOurAmount(self, channel):
         if self.__has_msatField(channel, "our_amount"):
-            return self.msat(channel, "our_amount")
+            return self.get_msat(channel, "our_amount")
         elif self.__has_msatField(channel, "to_us"):
-            return self.msat(channel, "to_us")
+            return self.get_msat(channel, "to_us")
         else:
             raise LnWrapper_msatFoundException("our_amount or to_us")
     
@@ -91,12 +142,26 @@ class LnWrapper:
     
     def getChannelOurReserve(self, channel):
         if self.__has_msatField(channel, "our_reserve"):
-            return self.msat(channel, "our_reserve")
+            return self.get_msat(channel, "our_reserve")
         else:
             raise LnWrapper_msatFoundException("our_reserve")
     
     def getChannelTheirReserve(self, channel):
         if self.__has_msatField(channel, "their_reserve"):
-            return self.msat(channel, "their_reserve")
+            return self.get_msat(channel, "their_reserve")
         else:
             raise LnWrapper_msatFoundException("their_reserve")
+    
+    def adaptRouteFees(self, route, amount):
+        delay=9
+        for r in reversed(route):
+            self.set_msat(r, "amount", amount)
+            r["msatoshi"] = amount
+            r["delay"] = delay
+            channel = self.getChannels(r["channel"])
+            for side in channel:
+                if side["destination"] == r["id"]:
+                    fee = side["base_fee_millisatoshi"]
+                    fee += amount * side["fee_per_millionth"] / 1000000
+                    amount += int(fee)
+                    delay += side["delay"]
