@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import sys, argparse
 from lnWrapper.lnWrapper import LnWrapper
+from helper.colorPrint import *
 
 parser = argparse.ArgumentParser(description="Lightning channel status")
 parser.add_argument( "-r", "--rpcFile", dest="rpcFile", action="store", default="/home/lightning/.lightning/lightning-rpc", type=str, help="lightning RPC file")
@@ -72,7 +73,21 @@ for p in peers:
         statusString += "-"*space
         statusString += "#"*theirEndChars
         statusString += "] %11d %9d(%3d) %9d(%3d)" % (theirEnd, fwdTotalIn, fwdCountIn, fwdTotalOut, fwdCountOut)
-        print(statusString)
+        status = 2
+        for stat in c["status"]:
+            if "Channel announced" in stat:
+                status = 0
+                break
+            elif "Funding transaction locked" in stat:
+                status = 1
+                break
+        if status == 0:
+            printGreen(statusString)
+        elif status == 1:
+            printYellow(statusString)
+        else:
+            printRed(statusString)
+        
         if more:
             for stat in c["status"]:
                 print("\t" + stat)
