@@ -64,7 +64,7 @@ for p in peers:
         theirEnd = ln.getChannelTheirAmount(c)
         ourEndRel = float(ourEnd)/float(total)
         theirEndRel = float(theirEnd)/float(total)
-        channelName = c["short_channel_id"].ljust(12)
+        channelName = c["short_channel_id"].ljust(13)
         statusString = "%s %11d [" % (channelName, ourEnd)
         ourEndChars = int(totalChChars * ourEndRel)
         theirEndChars = int(totalChChars * theirEndRel)
@@ -72,7 +72,7 @@ for p in peers:
         statusString += "#"*ourEndChars
         statusString += "-"*space
         statusString += "#"*theirEndChars
-        statusString += "] %11d %9d(%3d) %9d(%3d)" % (theirEnd, fwdTotalIn, fwdCountIn, fwdTotalOut, fwdCountOut)
+        statusString += "] %11d %11d(%3d) %11d(%3d)" % (theirEnd, fwdTotalIn, fwdCountIn, fwdTotalOut, fwdCountOut)
         status = 2
         for stat in c["status"]:
             if "Channel announced" in stat:
