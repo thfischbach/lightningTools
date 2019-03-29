@@ -127,7 +127,7 @@ class LnWrapper:
         elif self.__has_msatField(channel, "total"):
             return self.get_msat(channel, "total")
         else:
-            raise LnWrapper_msatFoundException("amount or total")
+            raise LnWrapper_msatNotFoundException("amount or total")
     
     def getChannelOurAmount(self, channel):
         if self.__has_msatField(channel, "our_amount"):
@@ -135,7 +135,7 @@ class LnWrapper:
         elif self.__has_msatField(channel, "to_us"):
             return self.get_msat(channel, "to_us")
         else:
-            raise LnWrapper_msatFoundException("our_amount or to_us")
+            raise LnWrapper_msatNotFoundException("our_amount or to_us")
     
     def getChannelTheirAmount(self, channel):
         return self.getChannelTotalAmount(channel) - self.getChannelOurAmount(channel)
@@ -144,13 +144,13 @@ class LnWrapper:
         if self.__has_msatField(channel, "our_reserve"):
             return self.get_msat(channel, "our_reserve")
         else:
-            raise LnWrapper_msatFoundException("our_reserve")
+            raise LnWrapper_msatNotFoundException("our_reserve")
     
     def getChannelTheirReserve(self, channel):
         if self.__has_msatField(channel, "their_reserve"):
             return self.get_msat(channel, "their_reserve")
         else:
-            raise LnWrapper_msatFoundException("their_reserve")
+            raise LnWrapper_msatNotFoundException("their_reserve")
     
     def adaptRouteFees(self, route, amount):
         delay=9
