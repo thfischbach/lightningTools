@@ -23,9 +23,9 @@ for o in ln.getFundOutputs():
 print("all amounts in mSat")
 print("Outputs total value: %d" % (totalOutputValue*1000))
 print
-header = "ChanId            ourEnd"
+header = "ChanId             ourEnd"
 header += " "*(totalChChars+17)
-header += "theirEnd     FwdIn(Cnt)    FwdOut(Cnt)"
+header += "theirEnd       FwdIn(Cnt)      FwdOut(Cnt)"
 if not more:
     print(header)
 
