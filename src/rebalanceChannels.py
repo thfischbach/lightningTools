@@ -7,6 +7,8 @@ parser.add_argument( "-r", "--rpcFile", dest="rpcFile", action="store", type=str
 parser.add_argument( "-o", "--outbound", dest="outbound", action="store", type=str, help="outbound short channel ID")
 parser.add_argument( "-i", "--inbound", dest="inbound", action="store", type=str, help="inbound short channel ID")
 parser.add_argument( "-a", "--amount", dest="amount", action="store", type=int, help="amount [mSat]")
+parser.add_argument( "-R", "--riskfactor", dest="riskfactor", action="store", type=int, default=5, help="risk factor")
+parser.add_argument( "-f", "--fuzzpercent", dest="fuzzpercent", action="store", type=float, default=5.0, help="fuzzing percentage [%]")
 
 def checkBalance(ln, outboundChannel, inboundChannel, amount):
     print("Checking out- and inbound channel...")
@@ -34,10 +36,10 @@ def checkBalance(ln, outboundChannel, inboundChannel, amount):
     print("their inbound reserve: %d" % theirReserve)
     return True
 
-def getMidRoute(inboundNodeId, outboundNodeId, amount, myId):
+def getMidRoute(inboundNodeId, outboundNodeId, amount, riskfactor, fuzzpercent, myId):
     tries = 10
     for i in range(tries):
-        route = ln.getRoute(toPeer=inboundNodeId, amount=amount, fromPeer=outboundNodeId)
+        route = ln.getRoute(toPeer=inboundNodeId, amount=amount, riskfactor=riskfactor, fuzzpercent=fuzzpercent, fromPeer=outboundNodeId)
         for r in route:
             if r["id"] == myId:
                 continue
@@ -50,6 +52,8 @@ rpcFile = args.rpcFile
 outboundChannelId = args.outbound
 inboundChannelId = args.inbound
 amount = args.amount
+riskfactor = args.riskfactor
+fuzzpercent = args.fuzzpercent
 ln = LnWrapper(rpcFile)
 
 myId = ln.getMyId()
@@ -69,7 +73,7 @@ invoice = ln.invoice(amount)
 payment_hash = invoice["payment_hash"]
 print("payment hash: %s" % payment_hash)
 
-routeMid = getMidRoute(inboundNodeId, outboundNodeId, amount, myId)
+routeMid = getMidRoute(inboundNodeId, outboundNodeId, amount, riskfactor, fuzzpercent, myId)
 if not routeMid:
     sys.exit(1)
 

@@ -56,8 +56,8 @@ class LnWrapper:
     def getMyId(self):
         return self.getInfo()["id"]
     
-    def getRoute(self, toPeer, amount, fromPeer=None):
-        route = self.rpc.getroute(toPeer, amount, riskfactor=1, cltv=9, fromid=fromPeer)
+    def getRoute(self, toPeer, amount, riskfactor=None, fuzzpercent=None, fromPeer=None):
+        route = self.rpc.getroute(toPeer, amount, riskfactor=riskfactor, fuzzpercent=fuzzpercent, cltv=9, fromid=fromPeer)
         return route["route"]
     
     def invoice(self, amount, label=None, description=None):
