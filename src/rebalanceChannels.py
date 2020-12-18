@@ -90,4 +90,7 @@ ret = ln.sendPay(route, payment_hash)
 print("status=%s" % ret["status"])
 print("Wait for payment...")
 ret = ln.waitSendPay(payment_hash)
-print("status=%s" % ret["status"])
+if ret:
+    print("status=%s" % ret["status"])
+else:
+    print("Failed!")

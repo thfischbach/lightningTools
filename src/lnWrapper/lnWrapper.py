@@ -1,4 +1,5 @@
 from lightning import LightningRpc
+from lightning.lightning import RpcError
 from lnWrapper.exceptions import LnWrapperException
 from time import time
 
@@ -70,7 +71,7 @@ class LnWrapper:
         return self.rpc.sendpay(route, payment_hash)
     
     def waitSendPay(self, payment_hash):
-        return self.rpc.waitsendpay(payment_hash)
+        return self.__rpcCall(self.rpc.waitsendpay, payment_hash)
     
     def get_msat(self, structure, fieldName):
         fullFieldName = fieldName + "_msat"
@@ -165,3 +166,10 @@ class LnWrapper:
                     fee += amount * side["fee_per_millionth"] / 1000000
                     amount += int(fee)
                     delay += side["delay"]
+    
+    def __rpcCall(self, rpcFunc, *args):
+        try:
+            return rpcFunc(*args)
+        except RpcError as e:
+            print("RpcError: %s" % str(e))
+            return None
